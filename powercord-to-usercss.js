@@ -38,13 +38,13 @@ async function main() {
     advanced.push(p.advanced);
   }
   const result = `/* ==UserStyle==
-@name 	${config.name ? config.name : porkord.name}
-@description	${config.description ? config.description : porkord.description}
-@version	${config.version ? config.version : porkord.version}
-@namespace	${config.namespace ? config.namespace : porkord.author}
-@author	${config.author ? config.author : porkord.author}
-@license	${config.license ? config.license : porkord.license}
-@preprocessor	uso
+@name         ${config.name ? config.name : porkord.name}
+@description  ${config.description ? config.description : porkord.description}
+@version      ${config.version ? config.version : porkord.version}
+@namespace    ${config.namespace ? config.namespace : porkord.author}
+@author       ${config.author ? config.author : porkord.author}
+@license      ${config.license ? config.license : porkord.license}
+@preprocessor uso
 ${advanced.join("\r\n")}
 ==/UserStyle== */
 @-moz-document domain("discord.com"), domain("discordapp.com") {
