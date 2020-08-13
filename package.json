@@ -1,0 +1,24 @@
+{
+  "name": "powercord-to-usercss",
+  "version": "1.0.0",
+  "description": "Converts powercord themes to UserCSS",
+  "main": "powercord-to-usercss.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/33kk/powercord-to-usercss.git"
+  },
+  "keywords": [
+    "usercss",
+    "userstyles",
+    "powercord"
+  ],
+  "author": "33KK",
+  "license": "WTFPL",
+  "bugs": {
+    "url": "https://github.com/33kk/powercord-to-usercss/issues"
+  },
+  "homepage": "https://github.com/33kk/powercord-to-usercss#readme",
+  "dependencies": {
+    "node-fetch": "^2.6.0"
+  }
+}

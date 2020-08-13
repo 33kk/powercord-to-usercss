@@ -7,17 +7,6 @@ let porkord = {};
 
 async function main() {
   try {
-    porkord = JSON.parse(
-      await fs.readFile(path.resolve(__dirname, "powercord_manifest.json"), {
-        encoding: "utf8",
-      })
-    );
-    console.log("Loaded powercord manifest.");
-  } catch {
-    console.log("No powercord manifest found.");
-    return;
-  }
-  try {
     config = JSON.parse(
       await fs.readFile(path.resolve(__dirname, "powercord-to-usercss.json"), {
         encoding: "utf8",
@@ -26,6 +15,17 @@ async function main() {
     console.log("Loaded converter config.");
   } catch {
     console.log("No converter config found.");
+  }
+  try {
+    porkord = JSON.parse(
+			await fs.readFile(config.manifestPath ? path.resolve(config.manifestPath) : path.resolve(__dirname, "powercord_manifest.json"), {
+        encoding: "utf8",
+      })
+    );
+    console.log("Loaded powercord manifest.");
+  } catch {
+    console.log("No powercord manifest found.");
+    process.exit(1);
   }
   let css = [];
   let advanced = [];
