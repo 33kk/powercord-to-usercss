@@ -24,7 +24,10 @@ async function main() {
       await fs.readFile(
         config.manifestPath
           ? path.resolve(config.manifestPath)
-          : path.resolve(config.basePath || __dirname, "powercord_manifest.json"),
+          : path.resolve(
+              config.basePath || __dirname,
+              "powercord_manifest.json"
+            ),
         {
           encoding: "utf8",
         }
@@ -38,7 +41,10 @@ async function main() {
   const result = await toUsercss(theme, config);
   const outPath = config.outPath
     ? config.outPath
-    : path.resolve(config.basePath || __dirname, idFromString(theme.name) + ".user.css");
+    : path.resolve(
+        config.basePath || __dirname,
+        idFromString(theme.name) + ".user.css"
+      );
   console.log(`Writing result to ${outPath}`);
   await fs.writeFile(outPath, result, {
     encoding: "utf8",
@@ -49,7 +55,7 @@ async function main() {
  * Converts powercord theme to usercss
  */
 async function toUsercss(theme, config) {
-	const basePath = config.basePath || __dirname;
+  const basePath = config.basePath || __dirname;
   let css = [];
   let advanced = [];
   let t = await convertPlugin(theme, true, config.importReplaces, basePath);
@@ -168,14 +174,19 @@ function getFirstGroup(regex, flags, str) {
 /**
  * Creates dropdown to toggle plugin and calls convertOption for each plugin option.
  */
-async function convertPlugin(plugin, enableByDefault, importReplaces, basePath) {
+async function convertPlugin(
+  plugin,
+  enableByDefault,
+  importReplaces,
+  basePath
+) {
   console.log(`Converting plugin ${plugin.name}...`);
   let content = await fetchImports(
     await fs.readFile(path.resolve(basePath, plugin.theme || plugin.file), {
       encoding: "utf8",
     }),
     importReplaces,
-		basePath
+    basePath
   );
   const name = idFromString(plugin.name);
   let advanced = "";
