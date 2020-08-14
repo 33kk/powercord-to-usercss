@@ -10,6 +10,7 @@
 
 ```json
 {
+	"basePath":     "base path of theme, default: ./",
 	"manifestPath": "path to powercord_manifest.json, default: ./powercord_manifest.json",
 	"outPath":      "output path, default: ./{theme name}.user.css",
 	"name":         "override name in usercss metadata",

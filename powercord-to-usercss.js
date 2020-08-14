@@ -2,10 +2,13 @@ const fs = require("fs").promises;
 const path = require("path");
 const fetch = require("node-fetch");
 
-let config = {};
-let porkord = {};
+if (require.main === module) {
+  main();
+}
 
 async function main() {
+  let config = {};
+  let theme = {};
   try {
     config = JSON.parse(
       await fs.readFile(path.resolve(__dirname, "powercord-to-usercss.json"), {
@@ -17,33 +20,53 @@ async function main() {
     console.log("No converter config found.");
   }
   try {
-    porkord = JSON.parse(
-			await fs.readFile(config.manifestPath ? path.resolve(config.manifestPath) : path.resolve(__dirname, "powercord_manifest.json"), {
-        encoding: "utf8",
-      })
+    theme = JSON.parse(
+      await fs.readFile(
+        config.manifestPath
+          ? path.resolve(config.manifestPath)
+          : path.resolve(config.basePath || __dirname, "powercord_manifest.json"),
+        {
+          encoding: "utf8",
+        }
+      )
     );
     console.log("Loaded powercord manifest.");
   } catch {
     console.log("No powercord manifest found.");
     process.exit(1);
   }
+  const result = await toUsercss(theme, config);
+  const outPath = config.outPath
+    ? config.outPath
+    : path.resolve(config.basePath || __dirname, idFromString(theme.name) + ".user.css");
+  console.log(`Writing result to ${outPath}`);
+  await fs.writeFile(outPath, result, {
+    encoding: "utf8",
+  });
+}
+
+/**
+ * Converts powercord theme to usercss
+ */
+async function toUsercss(theme, config) {
+	const basePath = config.basePath || __dirname;
   let css = [];
   let advanced = [];
-  let t = await convertPlugin(porkord, true);
+  let t = await convertPlugin(theme, true, config.importReplaces, basePath);
   css.push(t.css);
   advanced.push(t.advanced);
-  for (const plug of porkord.plugins) {
-    const p = await convertPlugin(plug);
+  for (const plug of theme.plugins) {
+    const p = await convertPlugin(plug, false, config.importReplaces, basePath);
     css.push(p.css);
     advanced.push(p.advanced);
   }
-  const result = `/* ==UserStyle==
-@name         ${config.name ? config.name : porkord.name}
-@description  ${config.description ? config.description : porkord.description}
-@version      ${config.version ? config.version : porkord.version}
-@namespace    ${config.namespace ? config.namespace : porkord.author}
-@author       ${config.author ? config.author : porkord.author}
-@license      ${config.license ? config.license : porkord.license}
+  return `/* ==UserStyle==
+@name         ${config.name || theme.name}
+@description  ${config.description || theme.description}
+@version      ${config.version || theme.version}
+@namespace    ${config.namespace || theme.author}
+@author       ${config.author || theme.author}
+@license      ${config.license || theme.license}
 @preprocessor uso
 ${advanced.join("\r\n")}
 ==/UserStyle== */
@@ -51,16 +74,7 @@ ${advanced.join("\r\n")}
 ${css.join("\r\n")}
 }
 `;
-  const outPath = config.outPath
-    ? config.outPath
-    : path.resolve(__dirname, idFromString(porkord.name) + ".user.css");
-  console.log(`Writing result to ${outPath}`);
-  await fs.writeFile(outPath, result, {
-    encoding: "utf8",
-  });
 }
-
-main();
 
 /**
  * Escapes css comments
@@ -69,6 +83,9 @@ function escCss(css) {
   return css.replace(/\*\//g, "*\\/");
 }
 
+/**
+ * Creates id from string
+ */
 function idFromString(str) {
   return str.toLowerCase().replace(/\s/g, "");
 }
@@ -76,7 +93,7 @@ function idFromString(str) {
 /**
  * Downloads @imports and replaces them with code
  */
-async function fetchImports(css) {
+async function fetchImports(css, importReplaces, basePath) {
   const regex = /@import url\(['"]?(.*?)['"]?\);/gm;
   let m;
 
@@ -90,14 +107,14 @@ async function fetchImports(css) {
       let url = oUrl;
       let localFile = false;
       let fetched = "";
-      if (config.importReplaces) {
-        for (const el of config.importReplaces) {
+      if (importReplaces) {
+        for (const el of importReplaces) {
           const rgx = new RegExp(el.regex, "g");
           if (rgx.test(url)) {
             localFile = el.isLocalFile || false;
             url = url.replace(rgx, el.to);
             if (localFile) {
-              url = path.resolve(__dirname, url);
+              url = path.resolve(basePath, url);
             }
             break;
           }
@@ -128,7 +145,7 @@ async function fetchImports(css) {
     }
   }
   if (/@import url\(.*?\)/.test(css)) {
-    return await fetchImports(css);
+    return await fetchImports(css, importReplaces, basePath);
   }
   return css;
 }
@@ -151,18 +168,20 @@ function getFirstGroup(regex, flags, str) {
 /**
  * Creates dropdown to toggle plugin and calls convertOption for each plugin option.
  */
-async function convertPlugin(plugin, enableByDefault) {
+async function convertPlugin(plugin, enableByDefault, importReplaces, basePath) {
   console.log(`Converting plugin ${plugin.name}...`);
   let content = await fetchImports(
-    await fs.readFile(path.resolve(__dirname, plugin.theme || plugin.file), {
+    await fs.readFile(path.resolve(basePath, plugin.theme || plugin.file), {
       encoding: "utf8",
-    })
+    }),
+    importReplaces,
+		basePath
   );
   const name = idFromString(plugin.name);
   let advanced = "";
   if (plugin.settings)
     for (const option of plugin.settings.options) {
-      const res = await convertOption(option, content);
+      const res = convertOption(option, content);
       content = res.css;
       advanced += `${res.advanced}\r\n`;
     }
@@ -188,7 +207,7 @@ ${advanced}
 /**
  * Creates @advanced entries for plugin option
  */
-async function convertOption(option, css) {
+function convertOption(option, css) {
   console.log(`Converting option ${option.name}...`);
   const rgx = new RegExp(`--${option.variable}: (.*?);`, "g");
   const defVal = getFirstGroup(`--${option.variable}: (.*?);`, "g", css);
@@ -249,3 +268,7 @@ async function convertOption(option, css) {
       };
   }
 }
+
+module.exports = {
+  toUsercss,
+};

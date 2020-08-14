@@ -1,4 +1,5 @@
 {
+	"basePath": "./Customa-Discord",
   "importReplaces": [
     {
       "regex": "https:\\/\\/customa\\.gitlab\\.io\\/Customa-Discord\\/",
